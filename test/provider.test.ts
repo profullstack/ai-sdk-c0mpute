@@ -68,17 +68,70 @@ describe('createC0mpute', () => {
     expect(calls[0].url).toBe('http://localhost:9999/v1/chat/completions');
   });
 
-  it('drops tools with a warning instead of sending them', async () => {
-    const { fetch, calls } = mockFetch(() => completion('no tools here'));
+  it('sends tools and reads tool calls back', async () => {
+    const { fetch, calls } = mockFetch(
+      () =>
+        new Response(
+          JSON.stringify({
+            id: 'chatcmpl-1',
+            object: 'chat.completion',
+            created: 1,
+            model: 'qwen3:4b',
+            choices: [
+              {
+                index: 0,
+                message: {
+                  role: 'assistant',
+                  content: null,
+                  tool_calls: [
+                    { id: 'call_1', type: 'function', function: { name: 'weather', arguments: '{"city":"Paris"}' } },
+                  ],
+                },
+                finish_reason: 'tool_calls',
+              },
+            ],
+            usage: { prompt_tokens: 3, completion_tokens: 1, total_tokens: 4 },
+          }),
+          { headers: { 'content-type': 'application/json' } },
+        ),
+    );
     const c0mpute = createC0mpute({ apiKey: 'k', fetch });
     const result = await generateText({
       model: c0mpute('auto'),
       prompt: 'weather?',
       tools: { weather: tool({ inputSchema: z.object({ city: z.string() }) }) },
     });
-    expect(calls[0].body.tools).toBeUndefined();
-    expect(calls[0].body.tool_choice).toBeUndefined();
-    expect(result.warnings?.some((w: any) => w.feature === 'tools')).toBe(true);
+    expect(calls[0].body.tools[0].function.name).toBe('weather');
+    expect(result.warnings?.some((w: any) => w.feature === 'tools')).toBe(false);
+    expect(result.toolCalls[0].toolName).toBe('weather');
+    expect(result.toolCalls[0].input).toEqual({ city: 'Paris' });
+    expect(result.finishReason).toBe('tool-calls');
+  });
+
+  it('streams tool call deltas', async () => {
+    const chunk = (delta: any, finish: string | null = null) =>
+      'data: ' +
+      JSON.stringify({ id: 'c', object: 'chat.completion.chunk', created: 1, model: 'qwen3:4b', choices: [{ index: 0, delta, finish_reason: finish }] });
+    const sse = [
+      ': c0mpute tools',
+      chunk({ role: 'assistant', content: null }),
+      chunk({ tool_calls: [{ index: 0, id: 'call_1', type: 'function', function: { name: 'weather', arguments: '' } }] }),
+      chunk({ tool_calls: [{ index: 0, function: { arguments: '{"city":' } }] }),
+      chunk({ tool_calls: [{ index: 0, function: { arguments: '"Paris"}' } }] }),
+      chunk({}, 'tool_calls'),
+      'data: [DONE]',
+      '',
+    ].join('\n\n');
+    const { fetch } = mockFetch(() => new Response(sse, { headers: { 'content-type': 'text/event-stream' } }));
+    const result = streamText({
+      model: createC0mpute({ apiKey: 'k', fetch })('qwen3:4b'),
+      prompt: 'weather?',
+      tools: { weather: tool({ inputSchema: z.object({ city: z.string() }) }) },
+    });
+    const toolCalls = await result.toolCalls;
+    expect(toolCalls[0].toolName).toBe('weather');
+    expect(toolCalls[0].input).toEqual({ city: 'Paris' });
+    expect(await result.finishReason).toBe('tool-calls');
   });
 
   it('parses a stream that carries SSE status comments', async () => {

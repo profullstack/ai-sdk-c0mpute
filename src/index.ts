@@ -60,34 +60,20 @@ export interface C0mputeProvider extends ProviderV4 {
   chatModel(modelId: C0mputeModelId): LanguageModelV4;
 }
 
-const DROPPED_FIELDS = ['tools', 'tool_choice', 'parallel_tool_calls'] as const;
-
 /**
- * Shape a Chat Completions body for c0mpute. The c0mpute API accepts only
- * string message content and system/user/assistant roles, and does not do
- * tool calling, so:
+ * Shape a Chat Completions body for c0mpute. Tool calling (`tools`,
+ * `tool_choice`, `parallel_tool_calls`, assistant `tool_calls`, `tool`
+ * results) goes through unchanged: c0mpute.com supports it on tool-capable
+ * models (qwen3, qwen2.5-coder, nemotron-3-nano, ...) and `auto`. The API
+ * takes text only, so:
  * - text-only content arrays are joined into one string,
- * - non-text parts (images, files) are dropped with a warning,
- * - `tools` / `tool_choice` are dropped with a warning.
+ * - non-text parts (images, files) are dropped with a warning.
  */
 export function toC0mputeBody(
   body: Record<string, any>,
   warnings?: SharedV4Warning[],
 ): Record<string, any> {
   const out: Record<string, any> = { ...body };
-  for (const field of DROPPED_FIELDS) {
-    if (out[field] !== undefined) {
-      if (field === 'tools') {
-        warnings?.push({
-          type: 'unsupported',
-          feature: 'tools',
-          details:
-            'c0mpute does not support tool calling yet; tools were not sent to the model.',
-        });
-      }
-      delete out[field];
-    }
-  }
   if (Array.isArray(out.messages)) {
     let droppedParts = false;
     out.messages = out.messages.map((message: Record<string, any>) => {
