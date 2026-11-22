@@ -1,6 +1,6 @@
 {
   "name": "@profullstack/ai-sdk-c0mpute",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "c0mpute provider for the Vercel AI SDK: open-weight models on a peer-to-peer compute network, priced by sealed-bid auction.",
   "license": "MIT",
   "author": "Profullstack, Inc. <hello@c0mpute.com>",

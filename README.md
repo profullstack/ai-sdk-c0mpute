@@ -81,7 +81,7 @@ Concrete models are only available while a node that serves them is online. The 
 | Text generation (`generateText`) | Yes |
 | Streaming (`streamText`) | Yes |
 | `temperature`, `maxOutputTokens` (up to 8192) | Yes |
-| Tool calling | No. Tools are not sent to the model and the SDK emits an `unsupported` warning. Use c0mpute chat plugins (remote MCP servers) on c0mpute.com if you need tools. |
+| Tool calling (`tools`, `toolChoice`, multi-step agents) | Yes, on `auto` and tool-capable models (`qwen3:4b`, `nemotron-3-nano:4b`, `qwen2.5-coder:7b`, `qwen3-coder:30b`, ...). Other models answer 400. See [c0mpute.com/docs#api](https://c0mpute.com/docs#api). |
 | Image / file input | No. Text only; non-text parts are removed with a warning. |
 | Structured output | Not enforced. Ask for JSON in the prompt and validate it yourself. |
 | Embeddings, images | Not through this provider |
