@@ -1,0 +1,79 @@
+{
+  "name": "@profullstack/ai-sdk-c0mpute",
+  "version": "0.1.0",
+  "description": "c0mpute provider for the Vercel AI SDK: open-weight models on a peer-to-peer compute network, priced by sealed-bid auction.",
+  "license": "MIT",
+  "author": "Profullstack, Inc. <hello@c0mpute.com>",
+  "homepage": "https://github.com/profullstack/ai-sdk-c0mpute#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/profullstack/ai-sdk-c0mpute.git"
+  },
+  "bugs": {
+    "url": "https://github.com/profullstack/ai-sdk-c0mpute/issues"
+  },
+  "keywords": [
+    "ai",
+    "ai-sdk",
+    "vercel-ai-sdk",
+    "provider",
+    "c0mpute",
+    "llm",
+    "open-weight",
+    "decentralized",
+    "p2p",
+    "openai-compatible"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "test:live": "C0MPUTE_LIVE=1 vitest run test/live.test.ts",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.94",
+    "@ai-sdk/provider": "^4.0.39",
+    "@ai-sdk/provider-utils": "^5.0.83"
+  },
+  "peerDependencies": {
+    "zod": "^3.25.76 || ^4.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "ai": "^7.0.179",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.1",
+    "zod": "^4.6.7"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
